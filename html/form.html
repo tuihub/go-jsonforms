@@ -1,0 +1,47 @@
+{{ define "Form" }}
+
+{{ if eq .Type "HorizontalLayout" }}
+<div class="container flex">
+  {{ template "Elements" . }}
+</div>
+{{ else if eq .Type "VerticalLayout" }}
+<div class="container">
+  {{ template "Elements" . }}
+</div>
+{{ else if eq .Type "Label" }}
+<h3>{{ .Text }}</h3>
+{{ else if eq .Type "Control" }}
+{{ template "Control" (find .Scope) }}
+{{ end }}
+
+{{ end }}
+
+
+{{ define "Elements" }}
+<!-- iterate Elements if there are any -->
+{{ if .Elements}}
+{{ range .Elements }}
+{{ template "Form" . }}
+{{ end }}
+{{ end }}
+{{ end }}
+
+
+{{ define "Control" }}
+<label for="{{ .Scope }}">{{ .Label }}</label>
+{{ if .enum }}
+<input list="{{ .Scope }}">
+<datalist id="{{ .Scope }}">
+  {{ range .enum }}
+  <option value="{{ . }}">
+    {{ end }}
+</datalist>
+{{ else }}
+{{ $type := .type }}
+{{ if eq $type "integer" }}
+{{ $type = "number" }}
+{{ end }}
+<input id="{{ .Scope }}" type="{{$type}}" {{ if .maximum }} max="{{.maximum}}" {{ end }} {{ if .minimum }}
+  min="{{ .minimum }}" {{ end }}>
+{{ end }} <!-- else -->
+{{ end }} <!-- control -->
