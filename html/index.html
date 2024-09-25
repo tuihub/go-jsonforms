@@ -5,12 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dynamic Form</title>
+  <script src="https://unpkg.com/htmx.org@2.0.2"></script>
 </head>
 
 <body>
   <h1>Dynamic Form</h1>
 
-  <form method="post" action="/submit">
+  <form hx-post="/" hx-target="this" hx-swap="none">
     {{ if .UISchema }}
     {{ template "Form" .UISchema }}
     {{ end }}

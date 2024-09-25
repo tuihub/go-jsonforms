@@ -41,7 +41,7 @@
 {{ if eq $type "integer" }}
 {{ $type = "number" }}
 {{ end }}
-<input id="{{ .Scope }}" type="{{$type}}" {{ if .maximum }} max="{{.maximum}}" {{ end }} {{ if .minimum }}
-  min="{{ .minimum }}" {{ end }}>
+<input id="{{ .Scope }}" name="{{ .Scope }}" type="{{$type}}" {{ if .maximum }} max="{{.maximum}}" {{ end }} {{ if
+  .minimum }} min="{{ .minimum }}" {{ end }}>
 {{ end }} <!-- else -->
 {{ end }} <!-- control -->
