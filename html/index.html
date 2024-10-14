@@ -6,17 +6,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dynamic Form</title>
   <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
 </head>
 
 <body>
-  <h1>Dynamic Form</h1>
-
-  <form hx-post="/" hx-target="this" hx-swap="none">
-    {{ if .UISchema }}
-    {{ template "Form" .UISchema }}
-    {{ end }}
-    <button type="submit">Submit</button>
-  </form>
+  <main class="wrapper">
+    <section class="container">
+      <h1>Dynamic Form</h1>
+      <form hx-post="/" hx-target="this" hx-swap="none">
+        {{ if .UISchema }}
+        {{ template "Form" .UISchema }}
+        {{ end }}
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+  </main>
 </body>
 
 </html>

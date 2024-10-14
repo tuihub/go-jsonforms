@@ -1,13 +1,13 @@
 {{ define "Form" }}
 
 {{ if eq .Type "HorizontalLayout" }}
-<div class="container flex">
+<fieldset class="row">
   {{ template "Elements" . }}
-</div>
+</fieldset>
 {{ else if eq .Type "VerticalLayout" }}
-<div class="container">
+<fieldset>
   {{ template "Elements" . }}
-</div>
+</fieldset>
 {{ else if eq .Type "Label" }}
 <h3>{{ .Text }}</h3>
 {{ else if eq .Type "Control" }}
@@ -28,22 +28,31 @@
 
 
 {{ define "Control" }}
-<label for="{{ .Scope }}">{{ .Label }}</label>
-{{ if .enum }}
-<input list="{{ .Scope }}">
-<datalist id="{{ .Scope }}">
-  {{ range .enum }}
-  <option value="{{ . }}">
+<div class="field">
+  <label for="{{ .Scope }}">{{ .Label }}</label>
+  {{ if .enum }}
+  <select list="{{ .Scope }}">
+    {{ range .enum }}
+    <option value="{{ . }}">{{ . }}</option>
     {{ end }}
-</datalist>
-{{ else }}
-{{ $type := .type }}
-{{ if eq $type "integer" }}
-{{ $type = "number" }}
-{{ else if eq .format "date" }}
-{{ $type = "date" }}
-{{ end }}
-<input id="{{ .Scope }}" name="{{ .Scope }}" type="{{$type}}" {{ if .maximum }} max="{{.maximum}}" {{ end }} {{ if
-  .minimum }} min="{{ .minimum }}" {{ end }}>
-{{ end }} <!-- else -->
+  </select>
+  {{ else }}
+  {{ $type := .type }}
+  {{ if eq $type "integer" }}
+  {{ $type = "number" }}
+  {{ else if eq .format "date" }}
+  {{ $type = "date" }}
+  {{ else if eq $type "string" }}
+  {{ $type = "text" }}
+  {{ end }}
+  <input class="input" id="{{ .Scope }}" name="{{ .Scope }}" type="{{$type}}" aria-describedby="{{ .Scope }}-helper" {{
+    if .maximum }} max="{{.maximum}}" {{ end }} {{ if .minimum }} min="{{ .minimum }}" {{ end }}>
+  {{ end }} <!-- else -->
+
+  {{ if .description }}
+  <small id="{{ .Scope }}-helper">
+    {{ .description }}
+  </small>
+  {{ end }}
+</div>
 {{ end }} <!-- control -->
