@@ -1,7 +1,7 @@
 {{ define "Form" }}
 
 {{ if eq .Type "HorizontalLayout" }}
-<fieldset class="row">
+<fieldset class="grid">
   {{ template "Elements" . }}
 </fieldset>
 {{ else if eq .Type "VerticalLayout" }}
@@ -28,7 +28,7 @@
 
 
 {{ define "Control" }}
-<div class="field">
+<div>
   <label for="{{ .Scope }}">{{ .Label }}</label>
   {{ if .enum }}
   <select list="{{ .Scope }}">
@@ -45,8 +45,8 @@
   {{ else if eq $type "string" }}
   {{ $type = "text" }}
   {{ end }}
-  <input class="input" id="{{ .Scope }}" name="{{ .Scope }}" type="{{$type}}" aria-describedby="{{ .Scope }}-helper" {{
-    if .maximum }} max="{{.maximum}}" {{ end }} {{ if .minimum }} min="{{ .minimum }}" {{ end }}>
+  <input id="{{ .Scope }}" name="{{ .Scope }}" type="{{$type}}" aria-describedby="{{ .Scope }}-helper" {{ if .maximum }}
+    max="{{.maximum}}" {{ end }} {{ if .minimum }} min="{{ .minimum }}" {{ end }}>
   {{ end }} <!-- else -->
 
   {{ if .description }}
