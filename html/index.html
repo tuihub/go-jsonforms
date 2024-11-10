@@ -6,76 +6,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dynamic Form</title>
   <script src="https://unpkg.com/htmx.org@2.0.2"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
   <style>
-    :root {
-      --pico-font-family-sans-serif: Inter, system-ui, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, Helvetica, Arial, "Helvetica Neue", sans-serif, var(--pico-font-family-emoji);
-      --pico-font-size: 50%;
-      --pico-line-height: 1.1;
-      --pico-form-element-spacing-vertical: 0.2rem;
-      --pico-form-element-spacing-horizontal: 0.4rem;
-      --pico-border-radius: 0.125rem;
+    /* Default padding for mobile devices */
+    .container {
+      padding-left: 20px;
+      padding-right: 20px;
+      margin: 0 auto;
+      max-width: 100%;
     }
 
-    @media (min-width: 576px) {
-      :root {
-        --pico-font-size: 50%;
+    /* Tablet devices */
+    @media screen and (min-width: 768px) {
+      .container {
+        padding-left: 40px;
+        padding-right: 40px;
       }
     }
 
-    @media (min-width: 768px) {
-      :root {
-        --pico-font-size: 50%;
+    /* Desktop devices */
+    @media screen and (min-width: 1024px) {
+      .container {
+        padding-left: 80px;
+        padding-right: 80px;
+        max-width: 1440px;
+        /* Maximum width for very large screens */
       }
     }
 
-    @media (min-width: 1024px) {
-      :root {
-        --pico-font-size: 50%;
-      }
-    }
-
-    @media (min-width: 1280px) {
-      :root {
-        --pico-font-size: 50%;
-      }
-    }
-
-    @media (min-width: 1536px) {
-      :root {
-        --pico-font-size: 50%;
-      }
-    }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-      --pico-font-weight: 600;
-    }
-
-    article {
-      border: 1px solid var(--pico-muted-border-color);
-      border-radius: calc(var(--pico-border-radius) * 2);
-    }
-
-    article>footer {
-      border-radius: calc(var(--pico-border-radius) * 2);
+    .column {
+      padding: .4rem;
     }
   </style>
 </head>
 
 <body>
   <main class="container">
-    <h1>Dynamic Form</h1>
-    <form hx-post="/" hx-target="this" hx-swap="none">
-      {{ if .UISchema }}
-      {{ template "Form" .UISchema }}
-      {{ end }}
-      <button type="submit">Submit</button>
-    </form>
+    <div>
+      {{ template "Screen" . }}
+    </div>
   </main>
 </body>
 

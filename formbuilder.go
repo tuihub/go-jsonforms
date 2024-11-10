@@ -2,7 +2,6 @@ package goformsbuilder
 
 import (
 	"embed"
-	"fmt"
 	"html/template"
 	"net/url"
 	"strconv"
@@ -12,38 +11,7 @@ import (
 //go:embed html/*
 var resources embed.FS
 
-var templates = template.Must(template.New("").Funcs(templateFuncs).ParseFS(resources, "html/*"))
-var templateFuncs = template.FuncMap{
-	"find": func(object any, path string) string {
-		fmt.Printf("object: %v\n", object)
-		fmt.Printf("path: %v\n", path)
-		return "abc"
-	},
-}
-
 type SchemaJson map[string]interface{}
-
-type Property struct {
-	Type        string   `json:"type"`
-	MinLength   int      `json:"minLength,omitempty"`
-	MaxLength   int      `json:"maxLength,omitempty"`
-	Format      string   `json:"format,omitempty"`
-	Enum        []string `json:"enum,omitempty"`
-	Description string   `json:"description,omitempty"`
-}
-
-type UISchema struct {
-	Type     string      `json:"type"`
-	Elements []UIElement `json:"elements"`
-}
-
-type UIElement struct {
-	Type        string      `json:"type"`
-	Scope       string      `json:"scope,omitempty"`
-	Text        string      `json:"text,omitempty"`
-	Elements    []UIElement `json:"elements,omitempty"`
-	Suggestions []string    `json:"suggestion,omitempty"`
-}
 
 func BuildTemplate(schema SchemaJson, uiSchema UISchema) (string, error) {
 	var builder strings.Builder
@@ -57,7 +25,16 @@ func BuildTemplate(schema SchemaJson, uiSchema UISchema) (string, error) {
 		return element
 	}
 
-	err := templates.Funcs(template.FuncMap{"find": find}).ExecuteTemplate(&builder, "index.html", map[string]interface{}{
+	colWidth := func(scope string) int {
+		return 12 / len(uiSchema.Elements.FindElementWithChild(scope))
+	}
+
+	tmpl, err := template.New("").Funcs(template.FuncMap{"find": find, "colWidth": colWidth}).ParseFS(resources, "html/*")
+	if err != nil {
+		return builder.String(), err
+	}
+
+	err = tmpl.ExecuteTemplate(&builder, "index.html", map[string]interface{}{
 		"UISchema": uiSchema,
 		"Schema":   schema,
 	})

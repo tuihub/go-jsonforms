@@ -1,21 +1,18 @@
 {{ define "Form" }}
-
 {{ if eq .Type "HorizontalLayout" }}
-<fieldset class="grid">
+<div class="columns">
   {{ template "Elements" . }}
-</fieldset>
+</div>
 {{ else if eq .Type "VerticalLayout" }}
-<fieldset>
+<div>
   {{ template "Elements" . }}
-</fieldset>
+</div>
 {{ else if eq .Type "Label" }}
 <h3>{{ .Text }}</h3>
 {{ else if eq .Type "Control" }}
 {{ template "Control" (find .Scope) }}
 {{ end }}
-
 {{ end }}
-
 
 {{ define "Elements" }}
 <!-- iterate Elements if there are any -->
@@ -26,12 +23,11 @@
 {{ end }}
 {{ end }}
 
-
 {{ define "Control" }}
-<div>
-  <label for="{{ .Scope }}">{{ .Label }}</label>
+<div class="form-group column col-{{ colWidth .Scope }}">
+  <label class="form-label" for="{{ .Scope }}">{{ .Label }}</label>
   {{ if .enum }}
-  <select list="{{ .Scope }}">
+  <select class="form-select" list="{{ .Scope }}">
     {{ range .enum }}
     <option value="{{ . }}">{{ . }}</option>
     {{ end }}
@@ -45,10 +41,10 @@
   {{ else if eq $type "string" }}
   {{ $type = "text" }}
   {{ end }}
-  <input id="{{ .Scope }}" name="{{ .Scope }}" type="{{$type}}" aria-describedby="{{ .Scope }}-helper" {{ if .maximum }}
-    max="{{.maximum}}" {{ end }} {{ if .minimum }} min="{{ .minimum }}" {{ end }}>
+  <input class="form-input" id="{{ .Scope }}" name="{{ .Scope }}" type="{{$type}}"
+    aria-describedby="{{ .Scope }}-helper" {{ if .maximum }} max="{{.maximum}}" {{ end }} {{ if .minimum }}
+    min="{{ .minimum }}" {{ end }}>
   {{ end }} <!-- else -->
-
   {{ if .description }}
   <small id="{{ .Scope }}-helper">
     {{ .description }}
