@@ -1,4 +1,4 @@
-package goformsbuilder
+package gojsonforms
 
 type UISchema struct {
 	Type     string     `json:"type"`

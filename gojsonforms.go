@@ -1,4 +1,4 @@
-package goformsbuilder
+package gojsonforms
 
 import (
 	"embed"
