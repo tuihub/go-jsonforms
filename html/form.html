@@ -63,7 +63,7 @@
 
   <!-- enum -->
   {{ if .schema.enum }}
-  <select class="form-select" list="{{ .scope }}">
+  <select class="form-select" id="{{ .scope }}" list="{{ .scope }}">
     {{ range .schema.enum }}
     <option value="{{ . }}">{{ . }}</option>
     {{ end }}

@@ -48,6 +48,22 @@ func New(schema []byte, uiSchema []byte) (Form, error) {
 	return form, err
 }
 
+func NewWithMap(schema map[string]interface{}, uiSchema map[string]interface{}) (Form, error) {
+	var form Form
+
+	schemaB, err := json.Marshal(schema)
+	if err != nil {
+		return form, err
+	}
+
+	uiSchemaB, err := json.Marshal(uiSchema)
+	if err != nil {
+		return form, err
+	}
+
+	return New(schemaB, uiSchemaB)
+}
+
 func (form *Form) setup() error {
 	var err error
 
@@ -71,14 +87,28 @@ func (form *Form) setup() error {
 	})
 
 	// add HTML-col-tag
-	iterateObj(form.uiSchema, "type", "HorizontalLayout", func(c *gabs.Container) {
+	iterateObj(form.uiSchema, "type", nil, func(c *gabs.Container) {
+		cType, ok := c.Path("type").Data().(string)
+		if !ok {
+			return
+		}
+
+		if cType != "HorizontalLayout" && cType != "VerticalLayout" {
+			return
+		}
+
 		arrayCount, err := c.ArrayCountP("elements")
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		tag := fmt.Sprintf(" column col-%d", 12/arrayCount)
+		col := 12
+		if cType == "HorizontalLayout" {
+			col = 12 / arrayCount
+		}
+
+		tag := fmt.Sprintf(" column col-%d", col)
 		for i := range arrayCount {
 			c.SetP(tag, fmt.Sprintf("elements.%d.schema.col", i))
 		}
