@@ -76,25 +76,7 @@
 </head>
 
 <body>
-  <div class="container">
-    {{ if .Menu }}
-    <div class="sidebar">
-      <ul class="nav">
-        {{ range .Menu }}
-        <li class="nav-item">
-          <a href="/{{ .Link }}">{{ .Titel }}</a>
-        </li>
-        {{ end }}
-      </ul>
-    </div>
-    {{end}}
-
-    <div class="content">
-      <div>
-        {{ template "Screen" . }}
-      </div>
-    </div>
-  </div>
+  {{ template "Content" . }}
 </body>
 
 </html>

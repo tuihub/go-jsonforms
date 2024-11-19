@@ -1,0 +1,20 @@
+{{ define "Content" }}
+<div class="container">
+  {{ if .Menu }}
+  <div class="sidebar">
+    <ul class="nav">
+      {{ range .Menu }}
+      <li class="nav-item{{ if .Current }} active{{ end }}">
+        <a href="/{{ .Link }}">{{ .Titel }}</a>
+      </li>
+      {{ end }}
+    </ul>
+  </div>
+  {{end}}
+  <div class="content">
+    <div>
+      {{ template "Screen" . }}
+    </div>
+  </div>
+</div>
+{{ end }}

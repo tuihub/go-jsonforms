@@ -1,11 +1,15 @@
 {{ define "Screen" }}
-<h1>Dynamic Form</h1>
+{{ range .Menu }}
+{{ if .Current }}
+<h1>{{ .Titel }}</h1>
+{{ end }}
+{{ end }}
 <form hx-post="/" hx-target="this" hx-swap="none">
   <fieldset>
     {{ if .UISchema }}
     {{ template "Form" .UISchema }}
     {{ end }}
   </fieldset>
-  <button class="btn" type="submit">Submit</button>
+  <button class="btn" type="submit">Absenden</button>
 </form>
 {{ end }}

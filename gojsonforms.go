@@ -25,8 +25,9 @@ type Form struct {
 }
 
 type MenuItem struct {
-	Link  string
-	Titel string
+	Link    string
+	Titel   string
+	Current bool
 }
 
 func New(schema []byte, uiSchema []byte) (Form, error) {
@@ -46,22 +47,6 @@ func New(schema []byte, uiSchema []byte) (Form, error) {
 	err = form.setup()
 
 	return form, err
-}
-
-func NewWithMap(schema map[string]interface{}, uiSchema map[string]interface{}) (Form, error) {
-	var form Form
-
-	schemaB, err := json.Marshal(schema)
-	if err != nil {
-		return form, err
-	}
-
-	uiSchemaB, err := json.Marshal(uiSchema)
-	if err != nil {
-		return form, err
-	}
-
-	return New(schemaB, uiSchemaB)
 }
 
 func (form *Form) setup() error {
@@ -173,6 +158,14 @@ func (form *Form) SetMenu(menu []MenuItem) {
 }
 
 func (form *Form) Build() (string, error) {
+	return form.build("index.html")
+}
+
+func (form *Form) BuildContent() (string, error) {
+	return form.build("content.html")
+}
+
+func (form *Form) build(file string) (string, error) {
 	var builder strings.Builder
 	var err error
 
@@ -186,7 +179,7 @@ func (form *Form) Build() (string, error) {
 		panic(err)
 	}
 
-	err = tmpl.ExecuteTemplate(&builder, "index.html", map[string]interface{}{
+	err = tmpl.ExecuteTemplate(&builder, file, map[string]interface{}{
 		"UISchema": uischema,
 		"Menu":     form.menu,
 	})
