@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	gojsonforms "github.com/TobiEiss/go-jsonforms"
+	"github.com/TobiEiss/go-jsonforms/models"
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-var menu = []gojsonforms.MenuItem{
+var menu = []models.MenuItem{
 	{
 		Link:  "basic",
-		Titel: "Basic Forms",
+		Titel: "Basic",
 	},
 	{
 		Link:  "control",
-		Titel: "Control Forms",
+		Titel: "Control",
 	},
 	{
 		Link:  "array",
@@ -30,39 +30,22 @@ var menu = []gojsonforms.MenuItem{
 func main() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
-	router.Get("/{screen}", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/{screen:(basic|control|array)*}", func(w http.ResponseWriter, r *http.Request) {
 		screenID := chi.URLParam(r, "screen")
 		if screenID == "" {
 			screenID = "basic"
 		}
 
-		schemaData, err := os.ReadFile(fmt.Sprintf("testdata/%s/schema.json", screenID))
-		if err != nil {
-			panic(err)
+		for i := range menu {
+			menu[i].Current = (menu[i].Link == screenID)
 		}
 
-		uiSchemaData, err := os.ReadFile(fmt.Sprintf("testdata/%s/uischema.json", screenID))
-		if err != nil {
-			panic(err)
-		}
-
-		dataData, _ := os.ReadFile(fmt.Sprintf("testdata/%s/data.json", screenID))
-
-		site, err := gojsonforms.New(schemaData, uiSchemaData)
-		if err != nil {
-			panic(err)
-		}
-
-		if dataData != nil {
-			err = site.BindData(dataData)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		site.SetMenu(menu)
-
-		html, err := site.Build()
+		html, err := gojsonforms.NewBuilder().
+			WithSchemaFile(fmt.Sprintf("testdata/%s/schema.json", screenID)).
+			WithUISchemaFile(fmt.Sprintf("testdata/%s/uischema.json", screenID)).
+			WithDataFile(fmt.Sprintf("testdata/%s/data.json", screenID)).
+			WithMenu(menu).
+			Build(true)
 		if err != nil {
 			panic(err)
 		}
@@ -76,7 +59,7 @@ func main() {
 			panic(err)
 		}
 
-		result := gojsonforms.ReadForm(r.Form)
+		result := gojsonforms.Verify(r.Form)
 		jsonData, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
 			fmt.Println("Error marshaling JSON:", err)

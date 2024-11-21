@@ -2,4 +2,4 @@
 example/.DS_Store
 .air.toml
 tmp/
-testdata/internal
+internal/testdata/internal

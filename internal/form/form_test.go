@@ -1,11 +1,11 @@
-package gojsonforms_test
+package form_test
 
 import (
 	"reflect"
 	"testing"
 
 	gabs "github.com/Jeffail/gabs/v2"
-	gojsonforms "github.com/TobiEiss/go-jsonforms"
+	"github.com/TobiEiss/go-jsonforms/internal/form"
 )
 
 func TestIteration(t *testing.T) {
@@ -162,7 +162,8 @@ func TestIteration(t *testing.T) {
       					"scope": "#/properties/comments",
       					"schema": {
       						"type": "array",
-      						"title": "Comments"	
+      						"title": "Comments",
+      						"col": " column col-12"
       					},
       					"options": {
         					"elementLabelProp": "name",
@@ -184,7 +185,8 @@ func TestIteration(t *testing.T) {
 							              	"scope": "#/properties/comments/0/properties/name",
 							              	"schema": {
 							              		"type": "string",
-							              		"col": " column col-6"							              	},
+							              		"col": " column col-6"
+							              	},
 							              	"data": "John Doe"
 							            }
 									]
@@ -197,7 +199,8 @@ func TestIteration(t *testing.T) {
 							              	"scope": "#/properties/comments/1/properties/message",
 							              	"schema": {
 							              		"type": "string",
-							              		"col": " column col-6"							              	},
+							              		"col": " column col-6"
+							              	},
 							              	"data": "Another message"
 							            },
 							            {
@@ -205,7 +208,8 @@ func TestIteration(t *testing.T) {
 							              	"scope": "#/properties/comments/1/properties/name",
 							              	"schema": {
 							              		"type": "string",
-							              		"col": " column col-6"							              	},
+							              		"col": " column col-6"
+							              	},
 							              	"data": "Max Mustermann"
 							            }
 									]
@@ -219,22 +223,20 @@ func TestIteration(t *testing.T) {
 		},
 	}
 
-	// gojsonforms.Iterate()
-
 	for _, test := range tests {
 		t.Run(test.testStep, func(t *testing.T) {
-			site, err := gojsonforms.New([]byte(test.schema), []byte(test.uiSchema))
+			schema, _ := gabs.ParseJSON([]byte(test.schema))
+			uischema, _ := gabs.ParseJSON([]byte(test.uiSchema))
+			data, _ := gabs.ParseJSON([]byte(test.data))
+
+			form, err := form.NewForm(schema, uischema)
 			if err != nil {
 				t.Error(err)
-				return
 			}
 
-			if test.data != "" {
-				err = site.BindData([]byte(test.data))
-				if err != nil {
-					t.Error(err)
-					return
-				}
+			err = form.BindData(data)
+			if err != nil {
+				t.Error(err)
 			}
 
 			toJsonString := func(input []byte) string {
@@ -245,7 +247,7 @@ func TestIteration(t *testing.T) {
 				return obj.String()
 			}
 
-			uiSchemaString := toJsonString(site.UISchema())
+			uiSchemaString := toJsonString(form.UISchema())
 			expectedString := toJsonString([]byte(test.expected))
 			if !reflect.DeepEqual(uiSchemaString, expectedString) {
 				t.Errorf("not equal:\n%s\n%s", uiSchemaString, expectedString)

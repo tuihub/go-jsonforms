@@ -6,18 +6,15 @@
       "elements": [
         {
           "type": "Control",
-          "scope": "#/properties/name",
-          "label": "Name"
+          "scope": "#/properties/name"
         },
         {
           "type": "Control",
-          "scope": "#/properties/personalData/properties/age",
-          "label": "Age"
+          "scope": "#/properties/personalData/properties/age"
         },
         {
           "type": "Control",
-          "scope": "#/properties/birthDate",
-          "label": "Birthdate"
+          "scope": "#/properties/birthDate"
         }
       ]
     },

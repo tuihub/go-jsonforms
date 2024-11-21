@@ -1,28 +1,12 @@
 package gojsonforms
 
 import (
-	"embed"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"html/template"
 	"net/url"
-	"reflect"
-	"strconv"
-	"strings"
 
 	gabs "github.com/Jeffail/gabs/v2"
+	"github.com/TobiEiss/go-jsonforms/internal/form"
+	"github.com/TobiEiss/go-jsonforms/models"
 )
-
-//go:embed html/*
-var resources embed.FS
-
-type Form struct {
-	schema   *gabs.Container
-	uiSchema *gabs.Container
-	data     *gabs.Container
-	menu     []MenuItem
-}
 
 type MenuItem struct {
 	Link    string
@@ -30,201 +14,138 @@ type MenuItem struct {
 	Current bool
 }
 
-func New(schema []byte, uiSchema []byte) (Form, error) {
-	var form Form
-	schemaParsed, err := gabs.ParseJSON(schema)
+type builder struct {
+	uiSchema reader
+	schema   reader
+	data     reader
+	menu     []models.MenuItem
+}
+
+type reader struct {
+	Bytes []byte
+	Map   map[string]interface{}
+	File  string
+}
+
+type FormBuilder interface {
+	WithUISchemaBytes(uiSchema []byte) *FormBuilder
+	WithUISchemaMap(uiSchema map[string]interface{}) *FormBuilder
+	WithUISchemaFile(filePath string) *FormBuilder
+
+	WithSchemaBytes(schema []byte) *FormBuilder
+	WithSchemaMap(schema map[string]interface{}) *FormBuilder
+	WithSchemaFile(filePath string) *FormBuilder
+
+	WithDataBytes(data []byte) *FormBuilder
+	WithDataMap(data map[string]interface{}) *FormBuilder
+	WithDataFile(filePath string) *FormBuilder
+
+	WithMenu(menu []MenuItem) *FormBuilder
+
+	GetUISchema() []byte
+
+	Build() (string, error)
+}
+
+func (r *reader) Read() (*gabs.Container, error) {
+	if r.Bytes != nil {
+		return gabs.ParseJSON(r.Bytes)
+	} else if r.Map != nil {
+		return gabs.Wrap(r.Map), nil
+	} else if r.File != "" {
+		return gabs.ParseJSONFile(r.File)
+	}
+	return nil, nil
+}
+
+func NewBuilder() *builder {
+	return &builder{}
+}
+
+func (b *builder) Build(withIndex bool) (string, error) {
+	var html string
+
+	// schema is necessary
+	schema, err := b.schema.Read()
 	if err != nil {
-		return form, err
+		return html, err
 	}
 
-	uiSchemaParsed, err := gabs.ParseJSON(uiSchema)
+	// uischema is necessary
+	uiSchema, err := b.uiSchema.Read()
 	if err != nil {
-		return form, err
+		return html, err
 	}
 
-	form.schema = schemaParsed
-	form.uiSchema = uiSchemaParsed
-	err = form.setup()
-
-	return form, err
-}
-
-func (form *Form) setup() error {
-	var err error
-
-	// add schema-information as schema to every control
-	iterateObj(form.uiSchema, "type", "Control", func(c *gabs.Container) {
-		scope, ok := c.Path("scope").Data().(string)
-		if !ok {
-			err = errors.New(fmt.Sprintf("in %v is no scope", c))
-		}
-
-		for k, v := range form.schema.Path(gabsPath(scope, true)).ChildrenMap() {
-			// "simple" (not nested) object
-			if len(v.Children()) == 0 {
-				c.SetP(v, fmt.Sprintf("schema.%s", k))
-			}
-			// arrays (for e.g. items)
-			if _, err := v.ArrayCount(); err == nil {
-				c.SetP(v, fmt.Sprintf("schema.%s", k))
-			}
-		}
-	})
-
-	// add HTML-col-tag
-	iterateObj(form.uiSchema, "type", nil, func(c *gabs.Container) {
-		cType, ok := c.Path("type").Data().(string)
-		if !ok {
-			return
-		}
-
-		if cType != "HorizontalLayout" && cType != "VerticalLayout" {
-			return
-		}
-
-		arrayCount, err := c.ArrayCountP("elements")
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		col := 12
-		if cType == "HorizontalLayout" {
-			col = 12 / arrayCount
-		}
-
-		tag := fmt.Sprintf(" column col-%d", col)
-		for i := range arrayCount {
-			c.SetP(tag, fmt.Sprintf("elements.%d.schema.col", i))
-		}
-	})
-
-	return err
-}
-
-func (form *Form) BindData(data []byte) error {
-	var err error
-
-	dataParsed, err := gabs.ParseJSON(data)
-	form.data = dataParsed
-
-	// build multiple items for arrays
-	arrayObj, _ := gabs.New().Set("array")
-	iterateObj(form.uiSchema, "schema.type", arrayObj, func(c *gabs.Container) {
-		scope, ok := c.Path("scope").Data().(string)
-		if !ok {
-			err = errors.New(fmt.Sprintf("can't find scope for %v", c))
-		}
-
-		// how many data are there
-		arrayCount, err := form.data.ArrayCountP(gabsPath(scope, false))
-		if err != nil {
-			return
-		}
-
-		// create new array
-		origin := c.Path("options.detail").String()
-		for i := range arrayCount {
-			copy := strings.ReplaceAll(origin, "items/", fmt.Sprintf("%d/", i))
-			newDetails, _ := gabs.ParseJSON([]byte(copy))
-			c.ArrayAppendP(newDetails, "options.detail")
-		}
-		c.ArrayRemoveP(0, "options.detail")
-	})
-
-	// I don't know why....
-	form.uiSchema, _ = gabs.ParseJSON([]byte(form.uiSchema.String()))
-
-	// add data to every control
-	iterateObj(form.uiSchema, "type", "Control", func(c *gabs.Container) {
-		// ignore array-controls
-		schemaType := c.Path("schema.type").Data()
-		if reflect.DeepEqual(schemaType, "array") {
-			return
-		}
-
-		scope, ok := c.Path("scope").Data().(string)
-		if !ok {
-			err = errors.New(fmt.Sprintf("in %v is no scope", c))
-		}
-
-		c.SetP(form.data.Path(gabsPath(scope, false)).Data(), "data")
-	})
-	return err
-}
-
-func (form *Form) SetMenu(menu []MenuItem) {
-	form.menu = menu
-}
-
-func (form *Form) Build() (string, error) {
-	return form.build("index.html")
-}
-
-func (form *Form) BuildContent() (string, error) {
-	return form.build("content.html")
-}
-
-func (form *Form) build(file string) (string, error) {
-	var builder strings.Builder
-	var err error
-
-	tmpl, err := template.New("").ParseFS(resources, "html/*")
+	f, err := form.NewForm(schema, uiSchema)
 	if err != nil {
-		return builder.String(), err
+		return html, err
 	}
 
-	var uischema map[string]interface{}
-	if err := json.Unmarshal(form.uiSchema.Bytes(), &uischema); err != nil {
-		panic(err)
+	if data, err := b.data.Read(); err != nil {
+		return html, err
+	} else if data != nil {
+		f.BindData(data)
 	}
 
-	err = tmpl.ExecuteTemplate(&builder, file, map[string]interface{}{
-		"UISchema": uischema,
-		"Menu":     form.menu,
-	})
+	f.SetMenu(b.menu)
 
-	return builder.String(), err
+	if withIndex {
+		return f.BuildIndex()
+	}
+	return f.BuildContent()
 }
 
-func ReadForm(urlForm url.Values) string {
-	jsonObj := gabs.New()
-
-	for key, value := range urlForm {
-		path := gabsPath(key, false)
-
-		val := value[0]
-		if numVal, err := strconv.Atoi(val); err == nil {
-			jsonObj.SetP(numVal, path)
-		} else {
-			jsonObj.SetP(val, path)
-		}
-	}
-
-	return jsonObj.String()
+func Verify(urlForm url.Values) interface{} {
+	return form.ReadForm(urlForm).Data()
 }
 
-func (form *Form) UISchema() []byte {
-	return form.uiSchema.Bytes()
+func (b *builder) WithUISchemaBytes(uiSchema []byte) *builder {
+	b.uiSchema.Bytes = uiSchema
+	return b
 }
 
-// iterateObj searches for a key and value. If value is empty, it looks only for the key
-func iterateObj(container *gabs.Container, key string, value any, operate func(c *gabs.Container)) {
-	val := container.Path(key).Data()
-	if val != nil && (value == nil || reflect.DeepEqual(val, value)) {
-		operate(container)
-	}
-
-	for _, child := range container.Children() {
-		iterateObj(child, key, value, operate)
-	}
+func (b *builder) WithUISchemaMap(uiSchema map[string]interface{}) *builder {
+	b.uiSchema.Map = uiSchema
+	return b
 }
 
-func gabsPath(scope string, withProperties bool) string {
-	scope = strings.Trim(scope, "#/")
-	if !withProperties {
-		scope = strings.ReplaceAll(scope, "properties/", "")
-	}
-	path := strings.ReplaceAll(scope, "/", ".")
-	return path
+func (b *builder) WithUISchemaFile(uiSchema string) *builder {
+	b.uiSchema.File = uiSchema
+	return b
+}
+
+func (b *builder) WithSchemaBytes(schema []byte) *builder {
+	b.schema.Bytes = schema
+	return b
+}
+
+func (b *builder) WithSchemaMap(schema map[string]interface{}) *builder {
+	b.schema.Map = schema
+	return b
+}
+
+func (b *builder) WithSchemaFile(schema string) *builder {
+	b.schema.File = schema
+	return b
+}
+
+func (b *builder) WithDataBytes(data []byte) *builder {
+	b.data.Bytes = data
+	return b
+}
+
+func (b *builder) WithDataMap(data map[string]interface{}) *builder {
+	b.data.Map = data
+	return b
+}
+
+func (b *builder) WithDataFile(data string) *builder {
+	b.data.File = data
+	return b
+}
+
+func (b *builder) WithMenu(menu []models.MenuItem) *builder {
+	b.menu = menu
+	return b
 }

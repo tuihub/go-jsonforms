@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	gojsonforms "github.com/TobiEiss/go-jsonforms"
 	chi "github.com/go-chi/chi/v5"
@@ -19,39 +18,19 @@ var (
 )
 
 func main() {
-	schemaData, err := os.ReadFile(schema)
-	if err != nil {
-		panic(err)
-	}
-
-	uiSchemaData, err := os.ReadFile(uiSchema)
-	if err != nil {
-		panic(err)
-	}
-
-	dataD, err := os.ReadFile(data)
-	if err != nil {
-		panic(err)
-	}
-
-	site, err := gojsonforms.New(schemaData, uiSchemaData)
-	if err != nil {
-		panic(err)
-	}
-
-	err = site.BindData(dataD)
-	if err != nil {
-		panic(err)
-	}
-
-	html, err := site.Build()
-	if err != nil {
-		panic(err)
-	}
-
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+
+		html, err := gojsonforms.NewBuilder().
+			WithSchemaFile(schema).
+			WithUISchemaFile(uiSchema).
+			WithDataFile(data).
+			Build(true)
+		if err != nil {
+			fmt.Println("Error:", err.Error())
+		}
+
 		fmt.Fprintf(w, html)
 	})
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +39,7 @@ func main() {
 			panic(err)
 		}
 
-		result := gojsonforms.ReadForm(r.Form)
+		result := gojsonforms.Verify(r.Form)
 		jsonData, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
 			fmt.Println("Error marshaling JSON:", err)

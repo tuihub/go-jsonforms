@@ -7,10 +7,14 @@
         "type": "object",
         "properties": {
           "message": {
-            "type": "string"
+            "type": "string",
+            "title": "Message",
+            "description": "Please write a description"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "title": "Name",
+            "description": "Please enter a random name"
           }
         }
       }
