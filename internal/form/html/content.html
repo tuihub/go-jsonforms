@@ -3,6 +3,9 @@
   {{ if .Menu }}
   <div class="sidebar">
     <ul class="nav">
+      {{- if ne .Logo "" }}
+      <img src="{{- .Logo }}" alt="logo" class="logo">
+      {{- end }}
       {{ range .Menu }}
       <li class="nav-item{{ if .Current }} active{{ end }}">
         <a href="/{{ .Link }}">{{ .Titel }}</a>

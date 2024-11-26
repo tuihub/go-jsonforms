@@ -6,7 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dynamic Form</title>
   <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  {{- if ne .Css "" }}
+  <link rel="stylesheet" href="{{- .Css }}">
+  {{- else }}
   <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
+  {{- end }}
   <style>
     .content {
       flex: 1;
@@ -51,9 +55,12 @@
       margin: .4rem;
     }
 
+    .logo {
+      margin-bottom: .9rem;
+    }
+
     .nav {
       width: 200px;
-      background-color: #f1f1f1;
       padding: 20px;
       height: 100vh;
     }
@@ -61,12 +68,7 @@
     .nav-link {
       display: block;
       padding: 10px 0;
-      color: #333;
       text-decoration: none;
-    }
-
-    .nav-link:hover {
-      color: #000;
     }
 
     .form-group {

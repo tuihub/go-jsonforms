@@ -19,6 +19,8 @@ type builder struct {
 	schema   reader
 	data     reader
 	menu     []models.MenuItem
+	cssPath  string
+	logoPath string
 }
 
 type reader struct {
@@ -41,6 +43,8 @@ type FormBuilder interface {
 	WithDataFile(filePath string) *FormBuilder
 
 	WithMenu(menu []MenuItem) *FormBuilder
+	WithCssPath(cssPath string) *FormBuilder
+	WithLogoPath(cssPath string) *FormBuilder
 
 	GetUISchema() []byte
 
@@ -89,6 +93,8 @@ func (b *builder) Build(withIndex bool) (string, error) {
 	}
 
 	f.SetMenu(b.menu)
+	f.SetCSS(b.cssPath)
+	f.SetLogo(b.logoPath)
 
 	if withIndex {
 		return f.BuildIndex()
@@ -147,5 +153,15 @@ func (b *builder) WithDataFile(data string) *builder {
 
 func (b *builder) WithMenu(menu []models.MenuItem) *builder {
 	b.menu = menu
+	return b
+}
+
+func (b *builder) WithCss(cssPath string) *builder {
+	b.cssPath = cssPath
+	return b
+}
+
+func (b *builder) WithLogo(logoPath string) *builder {
+	b.logoPath = logoPath
 	return b
 }

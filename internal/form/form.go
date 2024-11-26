@@ -33,6 +33,8 @@ type Form struct {
 	uiSchema *gabs.Container
 	data     *gabs.Container
 	menu     []models.MenuItem
+	cssPath  string
+	logoPath string
 }
 
 func NewForm(schema, uiSchema *gabs.Container) (*Form, error) {
@@ -178,6 +180,14 @@ func (f *Form) SetMenu(menu []models.MenuItem) {
 	f.menu = menu
 }
 
+func (f *Form) SetCSS(cssPath string) {
+	f.cssPath = cssPath
+}
+
+func (f *Form) SetLogo(logoPath string) {
+	f.logoPath = logoPath
+}
+
 func (f *Form) BuildContent() (string, error) {
 	return f.build("raw.html")
 }
@@ -203,6 +213,8 @@ func (f *Form) build(file string) (string, error) {
 	err = tmpl.ExecuteTemplate(&builder, file, map[string]interface{}{
 		"UISchema": uischema,
 		"Menu":     f.menu,
+		"Css":      f.cssPath,
+		"Logo":     f.logoPath,
 	})
 
 	return builder.String(), err
