@@ -25,12 +25,16 @@ var menu = []models.MenuItem{
 		Link:  "array",
 		Titel: "Array Forms",
 	},
+	{
+		Link:  "arraySelect",
+		Titel: "Array Select",
+	},
 }
 
 func main() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
-	router.Get("/{screen:(basic|control|array)*}", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/{screen:(basic|control|array|arraySelect)*}", func(w http.ResponseWriter, r *http.Request) {
 		screenID := chi.URLParam(r, "screen")
 		if screenID == "" {
 			screenID = "basic"

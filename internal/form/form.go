@@ -18,6 +18,16 @@ import (
 //go:embed html/*
 var resources embed.FS
 
+var funcs = template.FuncMap{
+	"json": func(v interface{}) (string, error) {
+		b, err := json.Marshal(v)
+		if err != nil {
+			return "", err
+		}
+		return string(b), nil
+	},
+}
+
 type Form struct {
 	schema   *gabs.Container
 	uiSchema *gabs.Container
@@ -108,19 +118,47 @@ func (f *Form) BindData(data *gabs.Container) error {
 		for i := range arrayCount {
 			copy := strings.ReplaceAll(origin, "items/", fmt.Sprintf("%d/", i))
 			newDetails, _ := gabs.ParseJSON([]byte(copy))
-			c.ArrayAppendP(newDetails, "options.detail")
+			c.ArrayAppendP(newDetails, "options.details")
 		}
-		c.ArrayRemoveP(0, "options.detail")
+		c.DeleteP("options.detail")
 	})
 
 	// I don't know why....
 	f.uiSchema, _ = gabs.ParseJSON([]byte(f.uiSchema.String()))
 
+	// array-select options
+	iterateObj(f.uiSchema, "schema.type", "array-select", func(c *gabs.Container) {
+		scope, ok := c.Path("scope").Data().(string)
+		if !ok {
+			err = errors.New(fmt.Sprintf("in %v is no scope", c))
+		}
+
+		// create map in data
+		iterateArray(f.data, gabsPath(scope, false), func(dataElement *gabs.Container) {
+			label := []string{}
+			iterateArray(c, "options.elementLabelProps", func(labelElement *gabs.Container) {
+				path := labelElement.Data().(string)
+				label = append(label, dataElement.Path(gabsPath(path, false)).Data().(string))
+			})
+			c.SetP(dataElement, fmt.Sprintf("data.%s", strings.Join(label, " ")))
+		})
+
+		// clean pahts for scope in detail.elements
+		iterateObj(c.Path("options.detail.elements"), "type", "Control", func(control *gabs.Container) {
+			scope, ok := control.Path("scope").Data().(string)
+			if !ok {
+				err = errors.New(fmt.Sprintf("in %v is no scope", control))
+			}
+
+			control.SetP(strings.SplitN(gabsPath(scope, false), "items.", 2)[1], "scope")
+		})
+	})
+
 	// add data to every control
 	iterateObj(f.uiSchema, "type", "Control", func(c *gabs.Container) {
 		// ignore array-controls
 		schemaType := c.Path("schema.type").Data()
-		if reflect.DeepEqual(schemaType, "array") {
+		if reflect.DeepEqual(schemaType, "array") || reflect.DeepEqual(schemaType, "array-select") {
 			return
 		}
 
@@ -152,7 +190,7 @@ func (f *Form) build(file string) (string, error) {
 	var builder strings.Builder
 	var err error
 
-	tmpl, err := template.New("").ParseFS(resources, "html/*")
+	tmpl, err := template.New("").Funcs(funcs).ParseFS(resources, "html/*")
 	if err != nil {
 		return builder.String(), err
 	}
@@ -210,4 +248,21 @@ func gabsPath(scope string, withProperties bool) string {
 	}
 	path := strings.ReplaceAll(scope, "/", ".")
 	return path
+}
+
+func iterateArray(container *gabs.Container, path string, operate func(*gabs.Container)) error {
+	numberOfItems, err := container.ArrayCountP(path)
+	if err != nil {
+		fmt.Printf("err: %s %v\n", path, err)
+		return err
+	}
+
+	for i := range numberOfItems {
+		element, err := container.ArrayElementP(i, path)
+		if err != nil {
+			return err
+		}
+		operate(element)
+	}
+	return nil
 }

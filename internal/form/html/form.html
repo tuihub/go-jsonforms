@@ -26,6 +26,8 @@
 {{- else if eq .type "Control" }}
 {{- if eq .schema.type "array" }}
 {{- template "Array" . }}
+{{- else if eq .schema.type "array-select" }}
+{{- template "ArraySelect" . }}
 {{- else }}
 {{- template "Control" . }}
 {{- end }}
@@ -36,7 +38,7 @@
 <!-- Array template -->
 <!-- =============== -->
 {{- define "Array" }}
-{{- range .options.detail }}
+{{- range .options.details }}
 {{- template "Form" . }}
 {{- end }}
 {{- end }}
@@ -50,6 +52,30 @@
 {{- template "Form" . }}
 {{- end }}
 {{- end }}
+{{- end }}
+
+<!-- ===================== -->
+<!-- Array Select template -->
+<!-- ===================== -->
+{{- define "ArraySelect" }}
+<div class="columns">
+  <div class="form-group{{- if .schema.col }}{{- .schema.col }}{{- end }}">
+    {{- if .schema.title}}
+    <label class="form-label" for="{{- .scope }}">{{- .schema.title}}</label>
+    {{- end }}
+    <select class="form-select" id="{{- .scope }}" onchange="arraySelect(this)" list="{{- .scope }}">
+      {{- range $label, $val := .data}}
+      <option value="{{- . }}" data-element="{{- json $val }}">{{- $label }}</option>
+      {{- end}}
+    </select>
+    {{- if .schema.description }}
+    <small id="{{- .schema.scope }}-helper">
+      {{- .schema.description }}
+    </small>
+    {{- end }}
+  </div>
+</div>
+{{- template "Form" .options.detail }}
 {{- end }}
 
 <!-- ================ -->
@@ -69,6 +95,12 @@
     {{- end }}
   </select>
   <!-- no enum -->
+
+  <!-- checkbox -->
+  {{- else if eq .schema.type "bool" }}
+  <label class="form-checkbox form-inline" id="{{- .scope }}" name="{{- .scope }}">
+    <input type="checkbox"><i class="form-icon"></i> {{- .schema.title}}
+  </label>
   {{- else }}
 
   <!-- type -->

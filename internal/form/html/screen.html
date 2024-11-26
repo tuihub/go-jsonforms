@@ -4,7 +4,7 @@
 <h1>{{- .Titel }}</h1>
 {{- end }}
 {{- end }}
-<form hx-post="/" hx-target="this" hx-swap="none">
+<form id="form" hx-post="/" hx-target="this" hx-swap="none">
   <fieldset>
     {{- if .UISchema }}
     {{- template "Form" .UISchema }}

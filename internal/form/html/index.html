@@ -71,6 +71,7 @@
 
     .form-group {
       min-width: 200px;
+      margin-bottom: .4rem;
     }
   </style>
 </head>
@@ -78,5 +79,38 @@
 <body>
   {{- template "Content" . }}
 </body>
+
+<script>
+  function arraySelect(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const data = JSON.parse(selectedOption.dataset["element"]);
+    const form = document.getElementById("form");
+    const elements = form.querySelectorAll("input");
+    for (const input of elements) {
+      const val = getValueFromPath(data, input.name);
+      input.value = val;
+    }
+  }
+
+  function getValueFromPath(obj, path) {
+    const keys = path.split('.');
+    let current = obj;
+    for (const key of keys) {
+      if (current[key] === undefined) {
+        return undefined;
+      }
+      current = current[key];
+    }
+    return current;
+  }
+
+  // Pre-fill form with the first person's data on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("select").forEach(selectElement => {
+      arraySelect(selectElement);
+    });
+  });
+
+</script>
 
 </html>

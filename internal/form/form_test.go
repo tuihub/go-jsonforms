@@ -167,7 +167,7 @@ func TestIteration(t *testing.T) {
       					},
       					"options": {
         					"elementLabelProp": "name",
-        					"detail": [
+        					"details": [
         						{
 	        						"type": "HorizontalLayout",
 	        						"elements": [
@@ -216,6 +216,241 @@ func TestIteration(t *testing.T) {
 	        					}
 	        					
         					]
+						}
+					}
+				]
+  			}`,
+		},
+		{
+			testStep: "array-select",
+			schema: `{
+				"properties": {
+					"comments": {
+						"type": "array-select",
+						"title": "Comments",
+						"items": {
+							"type": "object",
+							"properties": {
+								"message": {
+        							"type": "string"
+        						},
+    							"name": {
+            						"type": "string"
+          						}
+        					}
+    					}
+    				}
+  				}				
+  			}`,
+			uiSchema: `{
+  				"type": "VerticalLayout",
+  				"elements": [
+    				{
+      					"type": "Control",
+      					"scope": "#/properties/comments",
+      					"options": {
+        					"elementLabelProps": [
+        						"name"
+        					],
+        					"detail": {
+          						"type": "HorizontalLayout",
+          						"elements": [
+						            {
+						              	"type": "Control",
+						              	"scope": "#/properties/comments/items/properties/message"
+						            },
+						            {
+							            "type": "Control",
+						              	"scope": "#/properties/comments/items/properties/name"
+						            }
+						        ]
+						    }
+						}
+					}
+				]
+  			}`,
+			data: `{
+  				"comments": [
+					{
+				    	"name": "John Doe",
+				      	"message": "This is an example message"
+				    },
+				    {
+				      	"name": "Max Mustermann",
+				      	"message": "Another message"
+				    }
+				]
+			}`,
+			expected: `{
+  				"type": "VerticalLayout",
+  				"elements": [
+    				{
+      					"type": "Control",
+      					"scope": "#/properties/comments",
+      					"schema": {
+      						"type": "array-select",
+      						"title": "Comments",
+      						"col": " column col-12"
+      					},
+      					"data": {
+							"John Doe": {
+				    			"name": "John Doe",
+				      			"message": "This is an example message"
+				    		},
+				    		"Max Mustermann": {
+				      			"name": "Max Mustermann",
+				      			"message": "Another message"
+				    		}
+						},
+						"options": {
+        					"elementLabelProps": [
+        						"name"
+        					],
+        					"detail": {
+        						"type": "HorizontalLayout",
+        						"elements": [
+						            {
+						              	"type": "Control",
+						              	"scope": "message",
+						              	"schema": {
+						              		"type": "string",
+						              		"col": " column col-6"
+						              	}
+						            },
+						            {
+							            "type": "Control",
+						              	"scope": "name",
+						              	"schema": {
+						              		"type": "string",
+						              		"col": " column col-6"
+						              	}
+						            }
+								]
+        					}
+						}
+					}
+				]
+  			}`,
+		},
+		{
+			testStep: "array-select-nested",
+			schema: `{
+				"properties": {
+					"comments": {
+						"type": "array-select",
+						"title": "Comments",
+						"items": {
+							"type": "object",
+							"properties": {
+								"message": {
+        							"type": "string"
+        						},
+    							"person": {
+            						"type": "object",
+            						"properties": {
+            							"name": {
+            								"type": "string"
+            							}
+            						}
+          						}
+        					}
+    					}
+    				}
+  				}				
+  			}`,
+			uiSchema: `{
+  				"type": "VerticalLayout",
+  				"elements": [
+    				{
+      					"type": "Control",
+      					"scope": "#/properties/comments",
+      					"options": {
+        					"elementLabelProps": [
+        						"person.name"
+        					],
+        					"detail": {
+          						"type": "HorizontalLayout",
+          						"elements": [
+						            {
+						              	"type": "Control",
+						              	"scope": "#/properties/comments/items/properties/message"
+						            },
+						            {
+							            "type": "Control",
+						              	"scope": "#/properties/comments/items/properties/person/properties/name"
+						            }
+						        ]
+						    }
+						}
+					}
+				]
+  			}`,
+			data: `{
+  				"comments": [
+					{
+						"person": {
+							"name": "John Doe"
+						},
+				      	"message": "This is an example message"
+				    },
+				    {
+				    	"person": {
+				      		"name": "Max Mustermann"
+				    	},
+				      	"message": "Another message"
+				    }
+				]
+			}`,
+			expected: `{
+  				"type": "VerticalLayout",
+  				"elements": [
+    				{
+      					"type": "Control",
+      					"scope": "#/properties/comments",
+      					"schema": {
+      						"type": "array-select",
+      						"title": "Comments",
+      						"col": " column col-12"
+      					},
+      					"data": {
+							"John Doe": {
+				    			"person": {
+				    				"name": "John Doe"
+				    			},
+				      			"message": "This is an example message"
+				    		},
+				    		"Max Mustermann": {
+				    			"person": {
+				    				"name": "Max Mustermann"
+				    			},
+				      			"message": "Another message"
+				    		}
+						},
+						"options": {
+        					"elementLabelProps": [
+        						"person.name"
+        					],
+        					"detail": {
+        						"type": "HorizontalLayout",
+        						"elements": [
+						            {
+						              	"type": "Control",
+						              	"scope": "message",
+						              	"schema": {
+						              		"type": "string",
+						              		"col": " column col-6"
+						              	}
+						            },
+						            {
+							            "type": "Control",
+						              	"scope": "person.name",
+						              	"schema": {
+						              		"type": "string",
+						              		"col": " column col-6"
+						              	}
+						            }
+								]
+        					}
 						}
 					}
 				]
