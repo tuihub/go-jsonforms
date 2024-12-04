@@ -33,6 +33,7 @@ type Form struct {
 	uiSchema *gabs.Container
 	data     *gabs.Container
 	menu     []models.MenuItem
+	postLink string
 	cssPath  string
 	logoPath string
 }
@@ -188,6 +189,10 @@ func (f *Form) SetLogo(logoPath string) {
 	f.logoPath = logoPath
 }
 
+func (f *Form) SetPostLink(link string) {
+	f.postLink = link
+}
+
 func (f *Form) BuildContent() (string, error) {
 	return f.build("raw.html")
 }
@@ -215,6 +220,7 @@ func (f *Form) build(file string) (string, error) {
 		"Menu":     f.menu,
 		"Css":      f.cssPath,
 		"Logo":     f.logoPath,
+		"PostLink": f.postLink,
 	})
 
 	return builder.String(), err
