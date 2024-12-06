@@ -29,13 +29,14 @@ var funcs = template.FuncMap{
 }
 
 type Form struct {
-	schema   *gabs.Container
-	uiSchema *gabs.Container
-	data     *gabs.Container
-	menu     []models.MenuItem
-	postLink string
-	cssPath  string
-	logoPath string
+	schema       *gabs.Container
+	uiSchema     *gabs.Container
+	data         *gabs.Container
+	menu         []models.MenuItem
+	postLink     string
+	cssPath      string
+	logoPath     string
+	confirmation models.Confirmation
 }
 
 func NewForm(schema, uiSchema *gabs.Container) (*Form, error) {
@@ -193,6 +194,10 @@ func (f *Form) SetPostLink(link string) {
 	f.postLink = link
 }
 
+func (f *Form) SetConfirmation(c models.Confirmation) {
+	f.confirmation = c
+}
+
 func (f *Form) BuildContent() (string, error) {
 	return f.build("raw.html")
 }
@@ -216,11 +221,12 @@ func (f *Form) build(file string) (string, error) {
 	}
 
 	err = tmpl.ExecuteTemplate(&builder, file, map[string]interface{}{
-		"UISchema": uischema,
-		"Menu":     f.menu,
-		"Css":      f.cssPath,
-		"Logo":     f.logoPath,
-		"PostLink": f.postLink,
+		"UISchema":     uischema,
+		"Menu":         f.menu,
+		"Css":          f.cssPath,
+		"Logo":         f.logoPath,
+		"PostLink":     f.postLink,
+		"Confirmation": f.confirmation,
 	})
 
 	return builder.String(), err

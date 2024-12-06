@@ -11,6 +11,10 @@
     {{- template "Form" .UISchema }}
     {{- end }}
   </fieldset>
-  <button class="btn" type="submit">Absenden</button>
+  {{- if .Confirmation.ButtonText }}
+  <button class="btn" type="submit" hx-confirm="submit">{{- .Confirmation.ButtonText }}</button>
+  {{- else }}
+  <button class="btn" type="submit">OK</button>
+  {{- end }}
 </form>
 {{- end }}

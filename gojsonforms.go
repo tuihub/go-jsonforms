@@ -15,13 +15,14 @@ type MenuItem struct {
 }
 
 type builder struct {
-	uiSchema reader
-	schema   reader
-	data     reader
-	menu     []models.MenuItem
-	postLink string
-	cssPath  string
-	logoPath string
+	uiSchema     reader
+	schema       reader
+	data         reader
+	menu         []models.MenuItem
+	postLink     string
+	cssPath      string
+	logoPath     string
+	confirmation models.Confirmation
 }
 
 type reader struct {
@@ -47,6 +48,7 @@ type FormBuilder interface {
 	WithCssPath(cssPath string) *FormBuilder
 	WithLogoPath(logoPath string) *FormBuilder
 	WithPostLink(link string) *FormBuilder
+	WithConfirmation(confirmation models.Confirmation) *FormBuilder
 
 	GetUISchema() []byte
 
@@ -98,6 +100,7 @@ func (b *builder) Build(withIndex bool) (string, error) {
 	f.SetCSS(b.cssPath)
 	f.SetLogo(b.logoPath)
 	f.SetPostLink(b.postLink)
+	f.SetConfirmation(b.confirmation)
 
 	if withIndex {
 		return f.BuildIndex()
@@ -171,5 +174,10 @@ func (b *builder) WithLogo(logoPath string) *builder {
 
 func (b *builder) WithPostLink(link string) *builder {
 	b.postLink = link
+	return b
+}
+
+func (b *builder) WithConfirmation(c models.Confirmation) *builder {
+	b.confirmation = c
 	return b
 }
