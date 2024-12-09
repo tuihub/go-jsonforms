@@ -113,8 +113,9 @@
   {{- $type = "text" }}
   {{- end }}
   <!-- end type -->
-  <input class="form-input" id="{{- .scope }}" name="{{- .scope }}" type="{{- $type }}"
-    aria-describedby="{{- .scope }}-helper" {{- if .data }}value="{{- .data }}" {{- end }} />
+  {{- . }}
+  <input class="form-input" id="{{- .scope }}" name="{{- if .name }}{{- .name }}{{- else }}{{- .scope }}{{- end}}"
+    type="{{- $type }}" aria-describedby="{{- .scope }}-helper" {{- if .data }}value="{{- .data }}" {{- end }} />
   {{- if .schema.description }}
   <small id="{{- .schema.scope }}-helper">
     {{- .schema.description }}

@@ -88,7 +88,7 @@
     const form = document.getElementById("form");
     const elements = form.querySelectorAll("input");
     for (const input of elements) {
-      const val = getValueFromPath(data, input.name);
+      const val = getValueFromPath(data, input.id);
       input.value = val;
     }
   }
