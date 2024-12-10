@@ -8,7 +8,12 @@
       {{- end }}
       {{ range .Menu }}
       <li class="nav-item{{ if .Current }} active{{ end }}">
+        <i class="icon icon-check"></i>
+        {{- if .ExternalLink }}
+        <a href="{{ .ExternalLink }}">{{ .Titel }}</a>
+        {{- else }}
         <a href="/{{ .Link }}">{{ .Titel }}</a>
+        {{- end}}
       </li>
       {{ end }}
     </ul>

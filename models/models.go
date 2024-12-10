@@ -1,9 +1,10 @@
 package models
 
 type MenuItem struct {
-	Link    string
-	Titel   string
-	Current bool
+	Link         string
+	ExternalLink string
+	Titel        string
+	Current      bool
 }
 
 type Confirmation struct {
