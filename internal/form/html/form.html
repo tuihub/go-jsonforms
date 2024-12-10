@@ -113,7 +113,6 @@
   {{- $type = "text" }}
   {{- end }}
   <!-- end type -->
-  {{- . }}
   <input class="form-input" id="{{- .scope }}" name="{{- if .name }}{{- .name }}{{- else }}{{- .scope }}{{- end}}"
     type="{{- $type }}" aria-describedby="{{- .scope }}-helper" {{- if .data }}value="{{- .data }}" {{- end }} />
   {{- if .schema.description }}
