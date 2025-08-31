@@ -27,6 +27,7 @@ type builder struct {
 	customTemplateFS   embed.FS
 	customTemplateDir  string
 	useCustomTemplates bool
+	customTemplateExt  string
 }
 
 type reader struct {
@@ -120,6 +121,7 @@ func (b *builder) Build(withIndex bool) (string, error) {
 	f.SetLogo(b.logoPath)
 	f.SetPostLink(b.postLink)
 	f.SetConfirmation(b.confirmation)
+	f.SetCustomTemplateExt(b.customTemplateExt)
 
 	if withIndex {
 		return f.BuildIndex()
@@ -205,6 +207,11 @@ func (b *builder) WithCustomTemplateFS(templateDir string, templateFS embed.FS) 
 	b.customTemplateDir = templateDir
 	b.customTemplateFS = templateFS
 	b.useCustomTemplates = true
+	return b
+}
+
+func (b *builder) WithCustomTemplateExt(ext string) *builder {
+	b.customTemplateExt = ext
 	return b
 }
 

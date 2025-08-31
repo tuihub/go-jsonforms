@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -40,6 +41,7 @@ type Form struct {
 	customTemplateFS   embed.FS
 	customTemplateDir  string
 	useCustomTemplates bool
+	customTemplateExt  string
 }
 
 func NewForm(schema, uiSchema *gabs.Container) (*Form, error) {
@@ -212,12 +214,19 @@ func (f *Form) SetConfirmation(c models.Confirmation) {
 	f.confirmation = c
 }
 
+func (f *Form) SetCustomTemplateExt(ext string) {
+	if ext == "" {
+		ext = "html"
+	}
+	f.customTemplateExt = ext
+}
+
 func (f *Form) BuildContent() (string, error) {
-	return f.build("raw.html")
+	return f.build("raw." + f.customTemplateExt)
 }
 
 func (f *Form) BuildIndex() (string, error) {
-	return f.build("index.html")
+	return f.build("index." + f.customTemplateExt)
 }
 
 func (f *Form) build(file string) (string, error) {
@@ -225,8 +234,8 @@ func (f *Form) build(file string) (string, error) {
 	var err error
 	var tmpl *template.Template
 
-	if f.useCustomTemplates && f.customTemplateDir != "" {
-		tmpl, err = template.New("").Funcs(funcs).ParseGlob(f.customTemplateDir + "/*.html")
+	if f.useCustomTemplates {
+		tmpl, err = template.New("").Funcs(funcs).ParseFS(f.customTemplateFS, path.Join(f.customTemplateDir, "*"))
 	} else {
 		// Use default embedded templates
 		tmpl, err = template.New("").Funcs(funcs).ParseFS(resources, "html/*")
