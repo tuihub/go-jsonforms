@@ -29,20 +29,34 @@ var funcs = template.FuncMap{
 }
 
 type Form struct {
-	schema       *gabs.Container
-	uiSchema     *gabs.Container
-	data         *gabs.Container
-	menu         []models.MenuItem
-	postLink     string
-	cssPath      string
-	logoPath     string
-	confirmation models.Confirmation
+	schema             *gabs.Container
+	uiSchema           *gabs.Container
+	data               *gabs.Container
+	menu               []models.MenuItem
+	postLink           string
+	cssPath            string
+	logoPath           string
+	confirmation       models.Confirmation
+	customTemplateFS   embed.FS
+	customTemplateDir  string
+	useCustomTemplates bool
 }
 
 func NewForm(schema, uiSchema *gabs.Container) (*Form, error) {
 	form := &Form{schema: schema, uiSchema: uiSchema}
 	err := form.setup()
+	return form, err
+}
 
+func NewFormWithCustomTemplates(schema, uiSchema *gabs.Container, templateFS embed.FS, templateDir string, useCustom bool) (*Form, error) {
+	form := &Form{
+		schema:             schema,
+		uiSchema:           uiSchema,
+		customTemplateFS:   templateFS,
+		customTemplateDir:  templateDir,
+		useCustomTemplates: useCustom,
+	}
+	err := form.setup()
 	return form, err
 }
 
@@ -209,8 +223,15 @@ func (f *Form) BuildIndex() (string, error) {
 func (f *Form) build(file string) (string, error) {
 	var builder strings.Builder
 	var err error
+	var tmpl *template.Template
 
-	tmpl, err := template.New("").Funcs(funcs).ParseFS(resources, "html/*")
+	if f.useCustomTemplates && f.customTemplateDir != "" {
+		tmpl, err = template.New("").Funcs(funcs).ParseGlob(f.customTemplateDir + "/*.html")
+	} else {
+		// Use default embedded templates
+		tmpl, err = template.New("").Funcs(funcs).ParseFS(resources, "html/*")
+	}
+
 	if err != nil {
 		return builder.String(), err
 	}

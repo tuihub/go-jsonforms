@@ -1,6 +1,7 @@
 package gojsonforms
 
 import (
+	"embed"
 	"net/url"
 
 	gabs "github.com/Jeffail/gabs/v2"
@@ -15,14 +16,17 @@ type MenuItem struct {
 }
 
 type builder struct {
-	uiSchema     reader
-	schema       reader
-	data         reader
-	menu         []models.MenuItem
-	postLink     string
-	cssPath      string
-	logoPath     string
-	confirmation models.Confirmation
+	uiSchema           reader
+	schema             reader
+	data               reader
+	menu               []models.MenuItem
+	postLink           string
+	cssPath            string
+	logoPath           string
+	confirmation       models.Confirmation
+	customTemplateFS   embed.FS
+	customTemplateDir  string
+	useCustomTemplates bool
 }
 
 type reader struct {
@@ -49,6 +53,8 @@ type FormBuilder interface {
 	WithLogoPath(logoPath string) *FormBuilder
 	WithPostLink(link string) *FormBuilder
 	WithConfirmation(confirmation models.Confirmation) *FormBuilder
+	WithCustomTemplateFS(templateFS embed.FS) *FormBuilder
+	WithCustomTemplateDir(templateDir string) *FormBuilder
 
 	GetUISchema() []byte
 
@@ -93,7 +99,12 @@ func (b *builder) Build(withIndex bool) (string, error) {
 		}
 	}
 
-	f, err := form.NewForm(schema, uiSchema)
+	var f *form.Form
+	if b.useCustomTemplates {
+		f, err = form.NewFormWithCustomTemplates(schema, uiSchema, b.customTemplateFS, b.customTemplateDir, b.useCustomTemplates)
+	} else {
+		f, err = form.NewForm(schema, uiSchema)
+	}
 	if err != nil {
 		return html, err
 	}
@@ -187,6 +198,13 @@ func (b *builder) WithPostLink(link string) *builder {
 
 func (b *builder) WithConfirmation(c models.Confirmation) *builder {
 	b.confirmation = c
+	return b
+}
+
+func (b *builder) WithCustomTemplateFS(templateDir string, templateFS embed.FS) *builder {
+	b.customTemplateDir = templateDir
+	b.customTemplateFS = templateFS
+	b.useCustomTemplates = true
 	return b
 }
 
