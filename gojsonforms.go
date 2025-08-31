@@ -79,10 +79,18 @@ func (b *builder) Build(withIndex bool) (string, error) {
 		return html, err
 	}
 
-	// uischema is necessary
+	// uischema is optional - generate default if not provided
 	uiSchema, err := b.uiSchema.Read()
 	if err != nil {
 		return html, err
+	}
+
+	// if no uiSchema provided, generate default from schema
+	if uiSchema == nil {
+		uiSchema, err = generateDefaultUISchema(schema)
+		if err != nil {
+			return html, err
+		}
 	}
 
 	f, err := form.NewForm(schema, uiSchema)
@@ -180,4 +188,151 @@ func (b *builder) WithPostLink(link string) *builder {
 func (b *builder) WithConfirmation(c models.Confirmation) *builder {
 	b.confirmation = c
 	return b
+}
+
+// generateDefaultUISchema creates a default UI schema from a JSON schema
+func generateDefaultUISchema(schema *gabs.Container) (*gabs.Container, error) {
+	return generateUISchemaFromProperties(schema, "")
+}
+
+// generateUISchemaFromProperties recursively generates UI schema from properties
+func generateUISchemaFromProperties(schema *gabs.Container, basePath string) (*gabs.Container, error) {
+	defaultUISchema := gabs.New()
+
+	// Set the root layout type
+	defaultUISchema.SetP("VerticalLayout", "type")
+
+	// Initialize elements array
+	elements := make([]interface{}, 0)
+
+	// Get properties from schema
+	properties := schema.Path("properties")
+	if properties != nil {
+		for propertyName := range properties.ChildrenMap() {
+			// Get the property schema
+			propertySchema := properties.Path(propertyName)
+
+			// Build the scope path
+			var scope string
+			if basePath == "" {
+				scope = "#/properties/" + propertyName
+			} else {
+				scope = basePath + "/properties/" + propertyName
+			}
+
+			// Get the type of the property
+			propertyType := propertySchema.Path("type").Data()
+
+			if propertyType == "object" {
+				// Handle nested objects
+				nestedProperties := propertySchema.Path("properties")
+				if nestedProperties != nil {
+					// Create a group for nested object
+					group := map[string]interface{}{
+						"type":  "Group",
+						"scope": scope,
+					}
+
+					// Add title from schema or generate from property name
+					if title := propertySchema.Path("title").Data(); title != nil {
+						group["label"] = title
+					} else {
+						group["label"] = propertyName
+					}
+
+					// Recursively generate UI schema for nested properties
+					nestedElements := make([]interface{}, 0)
+					for nestedPropertyName := range nestedProperties.ChildrenMap() {
+						nestedPropertySchema := nestedProperties.Path(nestedPropertyName)
+						nestedScope := scope + "/properties/" + nestedPropertyName
+
+						nestedControl := map[string]interface{}{
+							"type":  "Control",
+							"scope": nestedScope,
+						}
+
+						// Add title from schema if available
+						if nestedTitle := nestedPropertySchema.Path("title").Data(); nestedTitle != nil {
+							nestedControl["title"] = nestedTitle
+						}
+
+						nestedElements = append(nestedElements, nestedControl)
+					}
+
+					group["elements"] = nestedElements
+					elements = append(elements, group)
+				}
+			} else if propertyType == "array" {
+				// Handle arrays
+				control := map[string]interface{}{
+					"type":  "Control",
+					"scope": scope,
+				}
+
+				// Add title from schema or generate from property name
+				if title := propertySchema.Path("title").Data(); title != nil {
+					control["title"] = title
+				}
+
+				// Check if array items have object type for special handling
+				itemsSchema := propertySchema.Path("items")
+				if itemsSchema != nil {
+					options := map[string]interface{}{}
+
+					if itemsSchema.Path("type").Data() == "object" {
+						// For array of objects, create detail layout
+						itemsProperties := itemsSchema.Path("properties")
+						if itemsProperties != nil {
+							detailElements := make([]interface{}, 0)
+
+							for itemPropertyName := range itemsProperties.ChildrenMap() {
+								itemPropertySchema := itemsProperties.Path(itemPropertyName)
+								itemControl := map[string]interface{}{
+									"type":  "Control",
+									"scope": scope + "/items/properties/" + itemPropertyName,
+								}
+
+								// Add title from schema if available
+								if itemTitle := itemPropertySchema.Path("title").Data(); itemTitle != nil {
+									itemControl["title"] = itemTitle
+								}
+
+								detailElements = append(detailElements, itemControl)
+							}
+
+							options["detail"] = map[string]interface{}{
+								"type":     "VerticalLayout",
+								"elements": detailElements,
+							}
+						}
+					} else {
+						// For arrays of primitive types, use simple detail
+						options["detail"] = "GENERATED"
+					}
+
+					control["options"] = options
+				}
+
+				elements = append(elements, control)
+			} else {
+				// Handle primitive types (string, number, integer, boolean, etc.)
+				control := map[string]interface{}{
+					"type":  "Control",
+					"scope": scope,
+				}
+
+				// Add title from schema if available
+				if title := propertySchema.Path("title").Data(); title != nil {
+					control["title"] = title
+				}
+
+				elements = append(elements, control)
+			}
+		}
+	}
+
+	// Set elements in the UI schema
+	defaultUISchema.SetP(elements, "elements")
+
+	return defaultUISchema, nil
 }
